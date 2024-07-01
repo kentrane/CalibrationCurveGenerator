@@ -32,8 +32,9 @@ if __name__ == '__main__':
 
     dbmAmplitude = np.array(dbmAmplitude) #Convert to numpy array
 
+    ## Plot the calibration curve with the frequencies we set during the setup of the calibration
     x = np.arange(10, 2500, 2)  # Frequencies in MHz
-    plt.plot(x[:-1],dbmAmplitude[:-1])
+    plt.plot(x[:-1],dbmAmplitude[:-1]) # Plot frequency vs amplitude in dBm and remove last sample because it's bad
     plt.title("Calibration data for measurement setup at -10dB")
     plt.xlabel("Frequency [MHz]")
     plt.ylabel("Amplitude [dBm]")
