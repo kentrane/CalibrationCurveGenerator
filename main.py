@@ -1,3 +1,5 @@
+"""Loads calibration data and saves it into a .npy file"""
+import math
 import numpy as np
 from numpy import log10, fft
 from scipy.signal import savgol_filter
@@ -5,14 +7,18 @@ from tqdm import tqdm
 from nptdms import TdmsFile
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-import math
+
 mpl.use('Qt5Agg')  # Defines plotting backend
 
-channel = 0
-calibration_file = f'NORA_ch{channel}.tdms'
+CHANNEL = 0
+calibration_file = f'NORA_ch{CHANNEL}.tdms'
 
 
 def load_calibration(f):
+    """
+    Loads calibration data from all pulses
+    and returns them as an array of pulses with properties
+    """
     with TdmsFile.open(f) as file:
         pulses = []
         props = file['data']['pulse number 1'].properties
@@ -28,22 +34,22 @@ if __name__ == '__main__':
     AverageAmplitude = []
     dbmAmplitude = []
     fft_peak = []
-    do_fft = False  # Don't spend the time if you don't need
-    bits_to_volts = 0.1/128  # Constant since NORA is 8 bit resolution and set to 100mV range
+    DO_FFT = False  # Don't spend the time if you don't need
+    BITS_TO_VOLTS = 0.1/128  # Constant since NORA is 8 bit resolution and set to 100mV range
     two_sqrt_2 = 2*math.sqrt(2)  # Constant for faster calculation
     cal_data, properties = load_calibration(calibration_file)
     for channel in tqdm(cal_data, desc="Processing", unit=" pulses", unit_scale=True):
         data = channel[:]
-        data = data * bits_to_volts  # Convert to volts (0.1V/128 bits = 0.00078125)
+        data = data * BITS_TO_VOLTS  # Convert to volts (0.1V/128 bits = 0.00078125)
 
-        if do_fft:
+        if DO_FFT:
             fft_data = fft.fft(data)
             fft_peak.append(np.max(fft_data))
 
-        rms = ((np.max(data)-np.min(data))/two_sqrt_2)
-        if rms == 0:  # small hack to avoid taking log(0)...
-            rms = 0.028
-        dbmAmplitude.append(10 * log10(np.abs(rms**2/50))+30)  # Convert to dBm at Z0=50 ohm
+        RMS = (np.max(data)-np.min(data))/two_sqrt_2
+        if not RMS:
+            RMS = 0.028  # small hack to avoid taking log(0)...
+        dbmAmplitude.append(10 * log10(np.abs(RMS**2/50))+30)  # Convert to dBm at Z0=50 ohm
     print("done!")
 
     print("plotting")
