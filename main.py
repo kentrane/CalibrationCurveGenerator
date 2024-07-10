@@ -1,8 +1,7 @@
 """Loads calibration data and saves it into a .npy file"""
 import math
-from time import sleep
 import numpy as np
-from numpy import log10, fft
+from numpy import log10
 from scipy.signal import savgol_filter
 from tqdm import tqdm
 from nptdms import TdmsFile
