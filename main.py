@@ -1,5 +1,6 @@
 """Loads calibration data and saves it into a .npy file"""
 import math
+from time import sleep
 import numpy as np
 from numpy import log10, fft
 from scipy.signal import savgol_filter
@@ -34,18 +35,12 @@ if __name__ == '__main__':
     AverageAmplitude = []
     dbmAmplitude = []
     fft_peak = []
-    DO_FFT = False  # Don't spend the time if you don't need
     BITS_TO_VOLTS = 0.1/128  # Constant since NORA is 8 bit resolution and set to 100mV range
     two_sqrt_2 = 2*math.sqrt(2)  # Constant for faster calculation
     cal_data, properties = load_calibration(calibration_file)
     for channel in tqdm(cal_data, desc="Processing", unit=" pulses", unit_scale=True):
         data = channel[:]
         data = data * BITS_TO_VOLTS  # Convert to volts (0.1V/128 bits = 0.00078125)
-
-        if DO_FFT:
-            fft_data = fft.fft(data)
-            fft_peak.append(np.max(fft_data))
-
         RMS = (np.max(data)-np.min(data))/two_sqrt_2
         if not RMS:
             RMS = 0.028  # small hack to avoid taking log(0)...
@@ -55,7 +50,7 @@ if __name__ == '__main__':
     print("plotting")
     dbmAmplitude = np.array(dbmAmplitude)  # Convert to numpy array
     np.save("CalibrationData.npy", dbmAmplitude)
-    filtered_response = savgol_filter(dbmAmplitude, 37, 7)
+    filtered_response = savgol_filter(dbmAmplitude, 9, 3)
     np.save("CalibrationFiltered.npy", filtered_response)
     # Plot the calibration curve with the frequencies we set during the setup of the calibration
     # Plotting frequency vs amplitude in dBm and remove last sample
@@ -67,5 +62,5 @@ if __name__ == '__main__':
     plt.grid()
     plt.xlabel("Frequency [MHz]")
     plt.ylabel("Amplitude [dBm]")
-    plt.savefig('Response.png', dpi=600)
+    plt.savefig('Response.png', dpi=300)
     plt.show()
